@@ -49,12 +49,9 @@ Also works in Edge (`edge://extensions`) and other Chromium browsers.
 - Click the first option labled "Open"
 - Upload your PDF file.
 - Preferably, Click F11 for a full screen mode.
-- Start scrolling using alt+s or the popup page extension.
-- 
-Doing the steps above make it so the extenstion registers
-
-the page as a normal page and not a PDF,
-
+- Start scrolling using alt+s or the popup page extension.\
+Doing the steps above make it so the extenstion registers\
+the page as a normal page and not a PDF,\
 This allows for smoother and better scrolling.
 
 ### Keyboard shortcuts (work even in the PDF viewer)
