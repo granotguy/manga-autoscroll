@@ -44,15 +44,15 @@ Also works in Edge (`edge://extensions`) and other Chromium browsers.
 - Speed is remembered between sessions.
 
 ### **For a better experience while reading a PDF:**
-- Click this [link](https://mozilla.github.io/pdf.js/web/viewer.html) to open a web pdf viewer.
+- Click this [link](https://mozilla.github.io/pdf.js/web/viewer.html) to open a web PDF viewer.
 - Click the >> sign at the top right/left of the site.
-- Click the first option labled "Open"
+- Click the first option labeled "Open"
 - Upload your PDF file.
-- Preferably, Click F11 for a full screen mode.
-- Start scrolling using alt+s or the popup page extension.
+- Preferably, press F11 for full-screen mode.
+- Start scrolling using Alt+S or the popup page extension.
 
-Doing the steps above make it so the extenstion registers\
-the page as a normal page and not a PDF,\
+Doing the steps above makes it so the extension registers\
+the page as a normal page and not a PDF.\
 This allows for smoother and better scrolling.
 
 ### Keyboard shortcuts (work even in the PDF viewer)
