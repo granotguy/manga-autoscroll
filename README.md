@@ -3,6 +3,8 @@
 A tiny Chrome extension that scrolls the page for you — made for reading manga,
 webtoons, and long PDFs without wearing out your mouse wheel (or your finger).
 
+**[▶ Watch a short demo](demo.mp4)**
+
 ## Why it works where other extensions don't
 
 Most auto-scrollers move the web page itself, which does nothing when your manga
