@@ -10,8 +10,9 @@ is a PDF — Chrome's PDF viewer swallows the scroll. This one has two engines:
 
 1. **Page mode** — buttery-smooth scrolling of the page or the reader panel.
    Works on manga sites, webtoons, Google Drive previews, pdf.js readers, etc.
-2. **PDF mode** — if the page itself can't be scrolled, it automatically sends
-   real mouse-wheel input to the tab instead. Works in Chrome's built-in PDF
+2. **PDF mode** — if the page itself can't be scrolled, it automatically drives
+   the tab with smooth synthesized scroll gestures (real browser-level input,
+   animated by the renderer itself). Works in Chrome's built-in PDF
    viewer, PDFs inside iframes, and canvas-based readers. Chrome shows a small
    *"Manga AutoScroll started debugging this browser"* bar while it's active —
    that's normal, and it disappears when you stop.
@@ -57,7 +58,7 @@ Change them anytime at `chrome://extensions/shortcuts`.
 |------|--------------|
 | `manifest.json` | Extension manifest (MV3) — permissions, shortcuts, entry points |
 | `content.js` | Page-mode engine: smooth scrolling + the floating control pill |
-| `background.js` | Service worker: PDF mode (debugger wheel events), keyboard commands, state |
+| `background.js` | Service worker: PDF mode (synthesized scroll gestures), keyboard commands, state |
 | `popup.html` / `popup.js` / `popup.css` | The toolbar popup UI |
 | `icons/` | Extension icons |
 

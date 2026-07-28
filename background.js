@@ -2,12 +2,11 @@
 // Routes popup <-> content script messages, handles keyboard shortcuts and the
 // toolbar badge, and provides "PDF mode": when the page itself can't be
 // scrolled (Chrome's built-in PDF viewer, PDFs in cross-origin iframes,
-// canvas readers), it sends real trusted mouse-wheel input to the tab
+// canvas readers), it drives the tab with synthesized scroll gestures
 // via the chrome.debugger API instead.
 
 const DEFAULTS = { speed: 40, direction: 'down' };
-const TICK_MS = 16; // ~60Hz; bigger gaps make the PDF viewer visibly step
-const pdfSessions = new Map(); // tabId -> { timer, speed, direction, paused }
+const pdfSessions = new Map(); // tabId -> { speed, direction, paused, stopped, source }
 
 function getSettings() {
   return chrome.storage.sync.get(DEFAULTS);
@@ -39,7 +38,13 @@ async function ensureContent(tabId) {
   return !!(await sendToContent(tabId, { type: 'status' }));
 }
 
-/* ---------- PDF mode (trusted wheel events) ---------- */
+/* ---------- PDF mode (synthesized scroll gestures) ---------- */
+
+// The renderer animates each gesture at vsync, which is far smoother than
+// timer-driven wheel events. Short chunks keep pause / speed changes
+// responsive (a gesture in flight can't be cancelled).
+const CHUNK_SECONDS = 0.8;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function startPdf(tabId, settings) {
   const existing = pdfSessions.get(tabId);
@@ -59,37 +64,48 @@ async function startPdf(tabId, settings) {
     return { ok: false, reason: 'attach-failed', detail: String((e && e.message) || e) };
   }
   const s = {
-    speed: settings.speed, direction: settings.direction, paused: false, timer: null,
-    last: performance.now(), acc: 0,
+    speed: settings.speed, direction: settings.direction,
+    paused: false, stopped: false, source: 'touch',
   };
-  s.timer = setInterval(() => {
-    const now = performance.now();
-    const dt = Math.min((now - s.last) / 1000, 0.2);
-    s.last = now;
-    if (s.paused) return;
-    // Accumulate real elapsed time (setInterval drifts) and send at least a
-    // whole pixel per event — sub-pixel wheel deltas get rounded away.
-    s.acc += s.speed * dt;
-    if (s.acc < 1) return;
-    const dy = s.acc * (s.direction === 'up' ? -1 : 1);
-    s.acc = 0;
-    chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
-      type: 'mouseWheel',
-      x: 150,
-      y: 300,
-      deltaX: 0,
-      deltaY: dy,
-    }).catch(() => stopPdf(tabId));
-  }, TICK_MS);
   pdfSessions.set(tabId, s);
+  pumpPdf(tabId, s);
   setBadge(tabId, 'on');
   return { ok: true, mode: 'pdf', active: true, paused: false, speed: s.speed, direction: s.direction };
+}
+
+async function pumpPdf(tabId, s) {
+  while (!s.stopped) {
+    if (s.paused) {
+      // Cheap extension API call so the service worker isn't shut down as idle.
+      if (!(await chrome.tabs.get(tabId).catch(() => null))) return stopPdf(tabId, true);
+      await sleep(200);
+      continue;
+    }
+    const distance = Math.max(20, Math.round(s.speed * CHUNK_SECONDS));
+    try {
+      await chrome.debugger.sendCommand({ tabId }, 'Input.synthesizeScrollGesture', {
+        x: 150,
+        y: 300,
+        yDistance: s.direction === 'up' ? distance : -distance, // positive scrolls up
+        speed: Math.max(20, Math.round(s.speed)),
+        preventFling: true,
+        gestureSourceType: s.source,
+      });
+    } catch (e) {
+      if (s.source === 'touch' && !s.stopped) {
+        s.source = 'mouse'; // touch gestures unsupported here — vsync-paced wheel instead
+        continue;
+      }
+      if (!s.stopped) stopPdf(tabId);
+      return;
+    }
+  }
 }
 
 function stopPdf(tabId, alreadyDetached = false) {
   const s = pdfSessions.get(tabId);
   if (!s) return;
-  clearInterval(s.timer);
+  s.stopped = true;
   pdfSessions.delete(tabId);
   if (!alreadyDetached) chrome.debugger.detach({ tabId }).catch(() => {});
   setBadge(tabId, null);
