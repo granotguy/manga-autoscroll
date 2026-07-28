@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <div class="logo">⇣</div>
+    <div>
+      <h1>Manga AutoScroll</h1>
+      <p id="statusText" class="status">Ready</p>
+    </div>
+  </header>
+
+  <button id="mainBtn" class="main-btn">▶&nbsp; Start scrolling</button>
+  <button id="stopBtn" class="stop-btn" hidden>■&nbsp; Stop</button>
+
+  <section>
+    <div class="row">
+      <label for="speedSlider">Speed</label>
+      <span id="speedVal" class="val">120 px/s</span>
+    </div>
+    <input type="range" id="speedSlider" min="0" max="100" step="1" value="54">
+    <div class="presets">
+      <button class="chip" data-speed="60">🐢 Chill</button>
+      <button class="chip" data-speed="120">📖 Read</button>
+      <button class="chip" data-speed="300">⚡ Skim</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="row"><label>Direction</label></div>
+    <div class="seg">
+      <button id="dirDown" class="on">▼ Down</button>
+      <button id="dirUp">▲ Up</button>
+    </div>
+  </section>
+
+  <p id="pdfNote" class="note" hidden>
+    Scrolling in <b>PDF mode</b>. Chrome shows a &ldquo;debugging this browser&rdquo; bar
+    while it&rsquo;s on &mdash; that&rsquo;s normal and it disappears when you stop.
+  </p>
+  <p id="errNote" class="note error" hidden></p>
+
+  <footer>
+    <span><kbd>Alt</kbd><kbd>S</kbd> start / pause</span>
+    <span><kbd>Alt</kbd><kbd>↑</kbd><kbd>↓</kbd> speed</span>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>
