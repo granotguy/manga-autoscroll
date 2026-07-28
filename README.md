@@ -34,6 +34,7 @@ is a PDF — Chrome's PDF viewer swallows the scroll. This one has two engines:
 5. Optional: pin it — puzzle-piece icon in the toolbar → 📌 next to Manga AutoScroll.
 
 Also works in Edge (`edge://extensions`) and other Chromium browsers.
+For iPhone/Safari, see [manga-autoscroll-ios](https://github.com/granotguy/manga-autoscroll-ios).
 
 ## How to use
 
