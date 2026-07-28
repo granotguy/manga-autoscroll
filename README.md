@@ -42,7 +42,8 @@ Also works in Edge (`edge://extensions`) and other Chromium browsers.
 - In page mode a small floating pill appears on the page with pause, −, +, and ✕.
 - It auto-stops a few seconds after reaching the end of the chapter.
 - Speed is remembered between sessions.
-**For a better experience while reading a PDF:**
+
+### **For a better experience while reading a PDF:**
 - Click this [link](https://mozilla.github.io/pdf.js/web/viewer.html) to open a web pdf viewer.
 - Click the >> sign at the top right/left of the site.
 - Click the first option labled "Open"
