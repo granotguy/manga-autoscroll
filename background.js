@@ -2,11 +2,11 @@
 // Routes popup <-> content script messages, handles keyboard shortcuts and the
 // toolbar badge, and provides "PDF mode": when the page itself can't be
 // scrolled (Chrome's built-in PDF viewer, PDFs in cross-origin iframes,
-// canvas readers), it drives the tab with synthesized scroll gestures
+// canvas readers), it sends real trusted mouse-wheel input to the tab
 // via the chrome.debugger API instead.
 
 const DEFAULTS = { speed: 40, direction: 'down' };
-const pdfSessions = new Map(); // tabId -> { speed, direction, paused, stopped, source }
+const pdfSessions = new Map(); // tabId -> { timer, speed, direction, paused }
 
 function getSettings() {
   return chrome.storage.sync.get(DEFAULTS);
@@ -38,13 +38,12 @@ async function ensureContent(tabId) {
   return !!(await sendToContent(tabId, { type: 'status' }));
 }
 
-/* ---------- PDF mode (synthesized scroll gestures) ---------- */
+/* ---------- PDF mode (trusted wheel events) ---------- */
 
-// The renderer animates each gesture at vsync, which is far smoother than
-// timer-driven wheel events. Short chunks keep pause / speed changes
-// responsive (a gesture in flight can't be cancelled).
-const CHUNK_SECONDS = 0.8;
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Wheel events land as instant jumps, so send small ones often. (Synthesized
+// scroll gestures would be smoother in theory, but they count as real pointer
+// input — they close the popup and Chrome's PDF viewer ignores them.)
+const TICK_MS = 8;
 
 async function startPdf(tabId, settings) {
   const existing = pdfSessions.get(tabId);
@@ -64,48 +63,46 @@ async function startPdf(tabId, settings) {
     return { ok: false, reason: 'attach-failed', detail: String((e && e.message) || e) };
   }
   const s = {
-    speed: settings.speed, direction: settings.direction,
-    paused: false, stopped: false, source: 'touch',
+    speed: settings.speed, direction: settings.direction, paused: false, timer: null,
+    last: performance.now(), acc: 0, idle: 0,
   };
-  pdfSessions.set(tabId, s);
-  pumpPdf(tabId, s);
-  setBadge(tabId, 'on');
-  return { ok: true, mode: 'pdf', active: true, paused: false, speed: s.speed, direction: s.direction };
-}
-
-async function pumpPdf(tabId, s) {
-  while (!s.stopped) {
+  s.timer = setInterval(() => {
+    const now = performance.now();
+    const dt = Math.min((now - s.last) / 1000, 0.2);
+    s.last = now;
     if (s.paused) {
-      // Cheap extension API call so the service worker isn't shut down as idle.
-      if (!(await chrome.tabs.get(tabId).catch(() => null))) return stopPdf(tabId, true);
-      await sleep(200);
-      continue;
-    }
-    const distance = Math.max(20, Math.round(s.speed * CHUNK_SECONDS));
-    try {
-      await chrome.debugger.sendCommand({ tabId }, 'Input.synthesizeScrollGesture', {
-        x: 150,
-        y: 300,
-        yDistance: s.direction === 'up' ? distance : -distance, // positive scrolls up
-        speed: Math.max(20, Math.round(s.speed)),
-        preventFling: true,
-        gestureSourceType: s.source,
-      });
-    } catch (e) {
-      if (s.source === 'touch' && !s.stopped) {
-        s.source = 'mouse'; // touch gestures unsupported here — vsync-paced wheel instead
-        continue;
+      // Occasional cheap API call so the service worker isn't shut down as
+      // idle during a long pause (that would kill this timer and the session).
+      s.idle += dt;
+      if (s.idle > 2) {
+        s.idle = 0;
+        chrome.tabs.get(tabId).catch(() => stopPdf(tabId, true));
       }
-      if (!s.stopped) stopPdf(tabId);
       return;
     }
-  }
+    // Accumulate real elapsed time (setInterval drifts) and send at least a
+    // whole pixel per event — sub-pixel wheel deltas get rounded away.
+    s.acc += s.speed * dt;
+    if (s.acc < 1) return;
+    const dy = s.acc * (s.direction === 'up' ? -1 : 1);
+    s.acc = 0;
+    chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
+      type: 'mouseWheel',
+      x: 150,
+      y: 300,
+      deltaX: 0,
+      deltaY: dy,
+    }).catch(() => stopPdf(tabId));
+  }, TICK_MS);
+  pdfSessions.set(tabId, s);
+  setBadge(tabId, 'on');
+  return { ok: true, mode: 'pdf', active: true, paused: false, speed: s.speed, direction: s.direction };
 }
 
 function stopPdf(tabId, alreadyDetached = false) {
   const s = pdfSessions.get(tabId);
   if (!s) return;
-  s.stopped = true;
+  clearInterval(s.timer);
   pdfSessions.delete(tabId);
   if (!alreadyDetached) chrome.debugger.detach({ tabId }).catch(() => {});
   setBadge(tabId, null);
