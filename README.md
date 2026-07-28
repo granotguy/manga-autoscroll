@@ -42,6 +42,16 @@ Also works in Edge (`edge://extensions`) and other Chromium browsers.
 - In page mode a small floating pill appears on the page with pause, −, +, and ✕.
 - It auto-stops a few seconds after reaching the end of the chapter.
 - Speed is remembered between sessions.
+**For a better experience while reading a PDF:**
+- Click this [link](https://mozilla.github.io/pdf.js/web/viewer.html) to open a web pdf viewer.
+- Click the >> sign at the top right/left of the site.
+- Click the first option labled "Open"
+- Upload your PDF file.
+- Preferably, Click F11 for a full screen mode.
+- Start scrolling using alt+s or the popup page extension.
+Doing the steps above make it so the extenstion registers
+the page as a normal page and not a PDF,
+This allows for smoother and better scrolling.
 
 ### Keyboard shortcuts (work even in the PDF viewer)
 
