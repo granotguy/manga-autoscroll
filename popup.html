@@ -6,34 +6,31 @@
 </head>
 <body>
   <header>
-    <div class="logo">⇣</div>
-    <div>
-      <h1>Manga AutoScroll</h1>
-      <p id="statusText" class="status">Ready</p>
-    </div>
+    <h1>Manga AutoScroll</h1>
+    <p id="statusText" class="status">Ready</p>
   </header>
 
-  <button id="mainBtn" class="main-btn">▶&nbsp; Start scrolling</button>
-  <button id="stopBtn" class="stop-btn" hidden>■&nbsp; Stop</button>
+  <button id="mainBtn" class="main-btn">Start scrolling</button>
+  <button id="stopBtn" class="stop-btn" hidden>Stop</button>
 
   <section>
     <div class="row">
       <label for="speedSlider">Speed</label>
-      <span id="speedVal" class="val">120 px/s</span>
+      <span id="speedVal" class="val">40 px/s</span>
     </div>
-    <input type="range" id="speedSlider" min="0" max="100" step="1" value="54">
+    <input type="range" id="speedSlider" min="0" max="100" step="1" value="30">
     <div class="presets">
-      <button class="chip" data-speed="60">🐢 Chill</button>
-      <button class="chip" data-speed="120">📖 Read</button>
-      <button class="chip" data-speed="300">⚡ Skim</button>
+      <button class="chip" data-speed="20">Slow</button>
+      <button class="chip" data-speed="40">Normal</button>
+      <button class="chip" data-speed="90">Fast</button>
     </div>
   </section>
 
   <section>
     <div class="row"><label>Direction</label></div>
     <div class="seg">
-      <button id="dirDown" class="on">▼ Down</button>
-      <button id="dirUp">▲ Up</button>
+      <button id="dirDown" class="on">Down</button>
+      <button id="dirUp">Up</button>
     </div>
   </section>
 
@@ -44,8 +41,8 @@
   <p id="errNote" class="note error" hidden></p>
 
   <footer>
-    <span><kbd>Alt</kbd><kbd>S</kbd> start / pause</span>
-    <span><kbd>Alt</kbd><kbd>↑</kbd><kbd>↓</kbd> speed</span>
+    <span>Alt+S start/pause</span>
+    <span>Alt+&uarr;/&darr; speed</span>
   </footer>
 
   <script src="popup.js"></script>

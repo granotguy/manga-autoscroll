@@ -5,8 +5,8 @@
 // canvas readers), it sends real trusted mouse-wheel input to the tab
 // via the chrome.debugger API instead.
 
-const DEFAULTS = { speed: 120, direction: 'down' };
-const TICK_MS = 60;
+const DEFAULTS = { speed: 40, direction: 'down' };
+const TICK_MS = 16; // ~60Hz; bigger gaps make the PDF viewer visibly step
 const pdfSessions = new Map(); // tabId -> { timer, speed, direction, paused }
 
 function getSettings() {
@@ -58,10 +58,21 @@ async function startPdf(tabId, settings) {
   } catch (e) {
     return { ok: false, reason: 'attach-failed', detail: String((e && e.message) || e) };
   }
-  const s = { speed: settings.speed, direction: settings.direction, paused: false, timer: null };
+  const s = {
+    speed: settings.speed, direction: settings.direction, paused: false, timer: null,
+    last: performance.now(), acc: 0,
+  };
   s.timer = setInterval(() => {
+    const now = performance.now();
+    const dt = Math.min((now - s.last) / 1000, 0.2);
+    s.last = now;
     if (s.paused) return;
-    const dy = ((s.speed * TICK_MS) / 1000) * (s.direction === 'up' ? -1 : 1);
+    // Accumulate real elapsed time (setInterval drifts) and send at least a
+    // whole pixel per event — sub-pixel wheel deltas get rounded away.
+    s.acc += s.speed * dt;
+    if (s.acc < 1) return;
+    const dy = s.acc * (s.direction === 'up' ? -1 : 1);
+    s.acc = 0;
     chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
       type: 'mouseWheel',
       x: 150,

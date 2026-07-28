@@ -7,7 +7,7 @@ const fromSlider = (v) => Math.round(MIN * Math.pow(MAX / MIN, v / 100));
 
 let tabId = null;
 let ui = { mode: 'none', active: false, paused: false };
-let settings = { speed: 120, direction: 'down' };
+let settings = { speed: 40, direction: 'down' };
 
 function renderStatus() {
   const t = $('statusText');
@@ -17,20 +17,17 @@ function renderStatus() {
   if (!ui.active) {
     t.textContent = 'Ready';
     t.classList.remove('live');
-    main.textContent = '▶  Start scrolling';
-    main.classList.remove('paused');
+    main.textContent = 'Start scrolling';
     stop.hidden = true;
   } else if (ui.paused) {
     t.textContent = 'Paused';
     t.classList.remove('live');
-    main.textContent = '▶  Resume';
-    main.classList.add('paused');
+    main.textContent = 'Resume';
     stop.hidden = false;
   } else {
-    t.textContent = ui.mode === 'pdf' ? 'Scrolling · PDF mode' : 'Scrolling';
+    t.textContent = ui.mode === 'pdf' ? 'Scrolling (PDF mode)' : 'Scrolling';
     t.classList.add('live');
-    main.textContent = '⏸  Pause';
-    main.classList.remove('paused');
+    main.textContent = 'Pause';
     stop.hidden = false;
   }
 }
@@ -67,7 +64,7 @@ async function refresh() {
 async function init() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   tabId = tab && tab.id;
-  settings = await chrome.storage.sync.get({ speed: 120, direction: 'down' });
+  settings = await chrome.storage.sync.get({ speed: 40, direction: 'down' });
   renderSettings();
   await refresh();
 }

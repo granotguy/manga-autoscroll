@@ -8,11 +8,11 @@
   const state = {
     active: false,
     paused: false,
-    speed: 120,      // pixels per second
+    speed: 40,       // pixels per second
     direction: 1,    // 1 = down, -1 = up
     target: null,
     raf: null,
-    acc: 0,          // fractional pixel accumulator (for very slow speeds)
+    pos: null,       // fractional scroll position (scrollTop reads back snapped)
     lastTs: 0,
     lastProgressTs: 0,
     lastFindTs: 0,
@@ -20,7 +20,7 @@
 
   const IDLE_STOP_MS = 6000; // auto-stop after 6s stuck at the end (lets lazy images load first)
 
-  chrome.storage.sync.get({ speed: 120, direction: 'down' }, (v) => {
+  chrome.storage.sync.get({ speed: 40, direction: 'down' }, (v) => {
     state.speed = v.speed;
     state.direction = v.direction === 'up' ? -1 : 1;
   });
@@ -84,25 +84,28 @@
     if (!state.active) return;
     if (!state.paused && state.target) {
       const dt = state.lastTs ? Math.min((ts - state.lastTs) / 1000, 0.1) : 0;
-      state.acc += state.speed * dt * state.direction;
-      const whole = state.acc >= 0 ? Math.floor(state.acc) : Math.ceil(state.acc);
-      if (whole !== 0) {
-        state.acc -= whole;
-        const before = state.target.scrollTop;
-        state.target.scrollTop = before + whole;
-        if (state.target.scrollTop !== before) {
-          state.lastProgressTs = ts;
-        } else {
-          // Stuck — maybe the layout changed; occasionally look for a new target.
-          if (ts - state.lastProgressTs > 1500 && ts - state.lastFindTs > 1000) {
-            state.lastFindTs = ts;
-            const t = findTarget();
-            if (t && t !== state.target) state.target = t;
-          }
-          if (ts - state.lastProgressTs > IDLE_STOP_MS) {
-            stop(); // reached the end
-            return;
-          }
+      const el = state.target;
+      const before = el.scrollTop;
+      // Keep our own fractional position: scrollTop reads back snapped to device
+      // pixels, and re-reading it as the base makes fast scrolling chunky.
+      // Resync only if the user scrolled on their own.
+      if (state.pos == null || Math.abs(state.pos - before) > 2) state.pos = before;
+      state.pos += state.speed * dt * state.direction;
+      const max = el.scrollHeight - el.clientHeight;
+      state.pos = Math.max(0, Math.min(max, state.pos));
+      el.scrollTop = state.pos;
+      if (el.scrollTop !== before) {
+        state.lastProgressTs = ts;
+      } else if (state.pos <= 0 || state.pos >= max) {
+        // Stuck at an edge — maybe the layout changed; occasionally look for a new target.
+        if (ts - state.lastProgressTs > 1500 && ts - state.lastFindTs > 1000) {
+          state.lastFindTs = ts;
+          const t = findTarget();
+          if (t && t !== state.target) { state.target = t; state.pos = null; }
+        }
+        if (ts - state.lastProgressTs > IDLE_STOP_MS) {
+          stop(); // reached the end
+          return;
         }
       }
     }
@@ -128,13 +131,13 @@
   function start(opts = {}) {
     if (typeof opts.speed === 'number') state.speed = opts.speed;
     if (opts.direction) state.direction = opts.direction === 'up' ? -1 : 1;
-    if (!state.target || !document.contains(state.target)) state.target = findTarget();
+    if (!state.target || !document.contains(state.target)) { state.target = findTarget(); state.pos = null; }
     if (!state.target) return { ok: false, reason: 'no-target' };
     state.paused = false;
     if (!state.active) {
       state.active = true;
       state.lastTs = 0;
-      state.acc = 0;
+      state.pos = null;
       state.lastProgressTs = performance.now();
       state.raf = requestAnimationFrame(tick);
     }
@@ -195,7 +198,7 @@
       font-size: 13px; color: #eee; text-align: center;
     }
     button:hover { background: rgba(255, 255, 255, .14); }
-    .spd { min-width: 44px; text-align: center; font-weight: 600; color: #c4b5fd; }
+    .spd { min-width: 44px; text-align: center; font-weight: 600; color: #fff; }
     .x { font-size: 11px; color: #999; margin-left: 2px; }
     .x:hover { color: #fff; background: rgba(255, 80, 80, .25); }
   `;

@@ -36,7 +36,7 @@ Also works in Edge (`edge://extensions`) and other Chromium browsers.
 ## How to use
 
 - Click the icon → **Start scrolling**.
-- Adjust speed with the slider or the 🐢 / 📖 / ⚡ presets; flip direction to ▲ Up if needed.
+- Adjust speed with the slider or the Slow / Normal / Fast presets; flip direction to Up if needed.
 - In page mode a small floating pill appears on the page with pause, −, +, and ✕.
 - It auto-stops a few seconds after reaching the end of the chapter.
 - Speed is remembered between sessions.
@@ -67,6 +67,6 @@ Change them anytime at `chrome://extensions/shortcuts`.
   extension's card in `chrome://extensions`.
 - **"Could not start PDF mode"**: close DevTools on that tab and retry — only
   one debugger can be attached at a time.
-- **Scrolls the wrong way?** Flip the ▼/▲ direction toggle in the popup.
+- **Scrolls the wrong way?** Flip the Down/Up direction toggle in the popup.
 - Tabs opened before installing work too (it injects itself on demand), but if
   anything acts weird, refresh the tab once.
