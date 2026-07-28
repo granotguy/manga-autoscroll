@@ -19,6 +19,7 @@ is a PDF — Chrome's PDF viewer swallows the scroll. This one has two engines:
    that's normal, and it disappears when you stop.
 
 ## Install (2 minutes)
+### (For an iOS version, press this [link](https://github.com/granotguy/manga-autoscroll-ios))
 
 1. Get the code — either clone it:
 
